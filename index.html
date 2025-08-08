@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hedelmäpeli</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .peli {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        .rullat {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .rulla {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background-color: white;
+            cursor: pointer;
+        }
+        
+        .rulla img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+        
+        .rulla.lukittu {
+            background-color: #ffffcc;
+            border-color: #ff6600;
+        }
+        
+        .pelitiedot {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .pelitiedot div {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        .syotteet {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        input[type="number"] {
+            padding: 5px;
+            font-size: 16px;
+            width: 80px;
+            text-align: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .viesti {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .voitto {
+            color: #4CAF50;
+        }
+        
+        .havio {
+            color: #f44336;
+        }
+        
+        .info {
+            color: #2196F3;
+        }
+        
+        .saannot {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .saannot h3 {
+            margin-top: 0;
+        }
+        
+        .saannot ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="peli">
+        <h1>Hedelmäpeli</h1>
+        
+        <div class="rullat">
+            <div class="rulla" id="rulla0">?</div>
+            <div class="rulla" id="rulla1">?</div>
+            <div class="rulla" id="rulla2">?</div>
+            <div class="rulla" id="rulla3">?</div>
+        </div>
+        
+        <div class="pelitiedot">
+            <div>Rahaa: <span id="rahat">50</span> €</div>
+            <div>
+                Panos: 
+                <input type="number" id="panos" value="1" min="1" max="10">
+                €
+            </div>
+        </div>
+        
+        <div class="syotteet">
+            <button id="pelaa" onclick="pelaa()">Pelaa</button>
+            <button id="poistaLukitukset" onclick="poistaLukitukset()" style="display: none;">Poista lukitukset</button>
+        </div>
+        
+        <div class="viesti" id="viesti"></div>
+        
+        <div class="saannot">
+            <h3>Voittotaulukko:</h3>
+            <ul>
+                <li>4 × Seiska = 10 × panos</li>
+                <li>4 × Omena = 6 × panos</li>
+                <li>4 × Banaani = 5 × panos</li>
+                <li>4 × Päärynä = 4 × panos</li>
+                <li>4 × Kirsikka = 3 × panos</li>
+                <li>3 × Seiska = 5 × panos</li>
+            </ul>
+            <p><strong>Ohje:</strong> Jos ei voittoa, voit lukita rullat klikkaamalla niitä ja pelata uudelleen!</p>
+        </div>
+    </div>
+
+    <script>
+        let rahat = 50;
+        let lukitutRullat = [false, false, false, false];
+        let voiLukita = false;
+        
+        const kuvat = [
+            {nimi: 'omena', src: 'images/Omena.jpg'},
+            {nimi: 'paaryma', src: 'images/päärynä.jpg'}, 
+            {nimi: 'kirsikka', src: 'images/kirsikka.jpg'},
+            {nimi: 'banaani', src: 'images/banaani.jpg'},
+            {nimi: 'seiska', src: 'images/seiska.jpg'}
+        ];
+        
+        function paivitaNaytto() {
+            document.getElementById('rahat').textContent = rahat;
+        }
+        
+        function pelaa() {
+            const panos = parseInt(document.getElementById('panos').value);
+            
+            if (panos > rahat) {
+                document.getElementById('viesti').innerHTML = '<span class="havio">Ei tarpeeksi rahaa!</span>';
+                return;
+            }
+            
+            if (panos < 1) {
+                document.getElementById('viesti').innerHTML = '<span class="havio">Panos vähintään 1€!</span>';
+                return;
+            }
+            
+            // Vähennetään panos
+            rahat -= panos;
+            
+            // Arvotaan kuvat lukitsemattomiin rulliin
+            for (let i = 0; i < 4; i++) {
+                if (!lukitutRullat[i]) {
+                    const satunnainen = Math.floor(Math.random() * kuvat.length);
+                    const kuva = kuvat[satunnainen];
+                    document.getElementById('rulla' + i).innerHTML = '<img src="' + kuva.src + '" alt="' + kuva.nimi + '">';
+                    document.getElementById('rulla' + i).dataset.kuva = kuva.nimi;
+                }
+            }
+            
+            // Tarkistetaan voitto
+            const voitto = tarkistaVoitto(panos);
+            
+            if (voitto > 0) {
+                rahat += voitto;
+                document.getElementById('viesti').innerHTML = '<span class="voitto">Voitit ' + voitto + '€!</span>';
+                poistaLukitukset();
+                voiLukita = false;
+            } else {
+                if (!voiLukita) {
+                    document.getElementById('viesti').innerHTML = '<span class="info">Ei voittoa. Voit lukita rullat ja yrittää uudelleen!</span>';
+                    voiLukita = true;
+                    document.getElementById('poistaLukitukset').style.display = 'inline-block';
+                } else {
+                    document.getElementById('viesti').innerHTML = '<span class="havio">Ei voittoa tälläkään kertaa.</span>';
+                    poistaLukitukset();
+                    voiLukita = false;
+                }
+            }
+            
+            paivitaNaytto();
+            
+            // Tarkistetaan onko rahaa jäljellä
+            if (rahat < panos) {
+                document.getElementById('pelaa').disabled = true;
+                if (rahat === 0) {
+                    document.getElementById('viesti').innerHTML = '<span class="havio">Peli päättyi - ei rahaa jäljellä!</span>';
+                }
+            }
+        }
+        
+        function tarkistaVoitto(panos) {
+            const rullat = [];
+            for (let i = 0; i < 4; i++) {
+                const kuva = document.getElementById('rulla' + i).dataset.kuva;
+                rullat.push(kuva);
+            }
+            
+            // Lasketaan kuinka monta samaa kuvaa
+            const laskut = {};
+            rullat.forEach(kuva => {
+                laskut[kuva] = (laskut[kuva] || 0) + 1;
+            });
+            
+            // Tarkistetaan voitot
+            for (let kuva in laskut) {
+                if (laskut[kuva] === 4) {
+                    if (kuva === 'seiska') return 10 * panos;
+                    if (kuva === 'omena') return 6 * panos;
+                    if (kuva === 'banaani') return 5 * panos;
+                    if (kuva === 'paaryma') return 4 * panos;
+                    if (kuva === 'kirsikka') return 3 * panos;
+                }
+                if (laskut[kuva] === 3 && kuva === 'seiska') {
+                    return 5 * panos;
+                }
+            }
+            
+            return 0;
+        }
+        
+        function poistaLukitukset() {
+            lukitutRullat = [false, false, false, false];
+            for (let i = 0; i < 4; i++) {
+                document.getElementById('rulla' + i).classList.remove('lukittu');
+                document.getElementById('rulla' + i).dataset.kuva = '';
+            }
+            document.getElementById('poistaLukitukset').style.display = 'none';
+            voiLukita = false;
+        }
+        
+        // Klikkaus rullille lukitsemista varten
+        for (let i = 0; i < 4; i++) {
+            document.getElementById('rulla' + i).addEventListener('click', function() {
+                if (voiLukita) {
+                    lukitutRullat[i] = !lukitutRullat[i];
+                    if (lukitutRullat[i]) {
+                        this.classList.add('lukittu');
+                    } else {
+                        this.classList.remove('lukittu');
+                    }
+                }
+            });
+        }
+        
+        // Päivitetään panos-kentän maksimiarvo kun rahat muuttuvat
+        document.getElementById('panos').addEventListener('change', function() {
+            const panos = parseInt(this.value);
+            if (panos > rahat) {
+                this.value = rahat;
+            }
+            if (panos >= 1 && rahat >= panos) {
+                document.getElementById('pelaa').disabled = false;
+            }
+        });
+        
+        paivitaNaytto();
+    </script>
+</body>
+</html>
